@@ -104,8 +104,8 @@ const DIRECTION = {
 
 class PathTile {
   constructor() {
-    this.x = 0;
-    this.y = 0;
+    this.x = PLAYGROUND_DIMENSIONS.minX;
+    this.y = PLAYGROUND_DIMENSIONS.minY;
   }
 }
 
@@ -116,6 +116,8 @@ function GeneratePath(pathTile, direction) {
 
   do {
     moveDirection = getRndInteger(1, 4);
+    /*if (moveDirection == 2 )
+    moveDirection = getRndInteger(1,4);*/
   } while (direction.lastDirection == moveDirection);
 
 
@@ -126,7 +128,7 @@ function GeneratePath(pathTile, direction) {
       case DIRECTION.Down:
         pathTile.y += BOX_SIZE;
         break;
-      case DIRECTION.Left:
+      case DIRECTION.Left+5:
         pathTile.x -= BOX_SIZE;
         break;
       case DIRECTION.Right:
