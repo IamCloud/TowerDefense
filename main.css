@@ -1,6 +1,9 @@
 body {background-color: grey}
 
-
+canvas {
+    display:block;
+    margin:auto;
+}
 
 title {
     font-size:10px;

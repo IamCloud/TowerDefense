@@ -1,9 +1,9 @@
-const BOX_SIZE = 16;
+const BOX_SIZE = 32;
 const PLAY_AREA_SIZE = {
-  width: BOX_SIZE * 60, //960
-  height: BOX_SIZE * 40 //640
+  width: BOX_SIZE * 30, //960
+  height: BOX_SIZE * 20 //640
 }
-const TOP_MARGIN_BOXES = 3;
+const TOP_MARGIN_BOXES = 2;
 const TOP_MARGIN = BOX_SIZE * TOP_MARGIN_BOXES;
 let gameScene = new Phaser.Scene('Game');
 gameScene.score = 0;
