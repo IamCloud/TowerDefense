@@ -21,6 +21,8 @@ let game = new Phaser.Game(config);
 //USED BY PHASER
 gameScene.init = function () {
   gameScene.scoreDisplay = this.add.text(0, 0, 'Score: ' + gameScene.score, { fontSize: '32px', color: "white" });
+  this.add.text(300, 0, 'Press S to spawn enemies', { fontSize: '12px', color: "white" });
+  this.add.text(600, 0, 'Press D to spawn map tiles', { fontSize: '12px', color: "white" });
 }
 
 gameScene.preload = function () {
@@ -32,7 +34,6 @@ gameScene.preload = function () {
 gameScene.create = function () {
   this.drawMap();
   this.initPlayerInputs();
-  this.drawMapPath();
 }
 
 gameScene.update = function () {
@@ -55,6 +56,10 @@ gameScene.initPlayerInputs = function () {
 
   gameScene.input.keyboard.on('keyup_S', function (event) {
     gameScene.spawnEnemyWave('frog', 100);
+  });
+
+  gameScene.input.keyboard.on('keyup_D', function (event) {
+    gameScene.drawMapPath();
   });
 }
 
@@ -109,33 +114,31 @@ class PathTile {
   }
 }
 
-
-
 function GeneratePath(pathTile, direction) {
-  let moveDirection
+  let moveDirection;
 
   do {
     moveDirection = getRndInteger(1, 4);
     /*if (moveDirection == 2 )
     moveDirection = getRndInteger(1,4);*/
-  } while (direction.lastDirection == moveDirection);
+  } while (direction.lastDirection === moveDirection);
 
 
-    switch (moveDirection) {
-      case DIRECTION.Up:
-        pathTile.y -= BOX_SIZE;
-        break;
-      case DIRECTION.Down:
-        pathTile.y += BOX_SIZE;
-        break;
-      case DIRECTION.Left+5:
-        pathTile.x -= BOX_SIZE;
-        break;
-      case DIRECTION.Right:
-        pathTile.x += BOX_SIZE;
-        break;
-    }
-  
+  switch (moveDirection) {
+    case DIRECTION.Up:
+      pathTile.y -= BOX_SIZE;
+      break;
+    case DIRECTION.Down:
+      pathTile.y += BOX_SIZE;
+      break;
+    case DIRECTION.Left + 5:
+      pathTile.x -= BOX_SIZE;
+      break;
+    case DIRECTION.Right:
+      pathTile.x += BOX_SIZE;
+      break;
+  }
+
   OutOfPlayGroundLimits(pathTile);
 }
 
@@ -151,15 +154,15 @@ function OutOfPlayGroundLimits(pathTile) {
 }
 
 function PathIsCompleted(pathTile) {
-  if (pathTile.x == PLAYGROUND_DIMENSIONS.maxX)
+  if (pathTile.x === PLAYGROUND_DIMENSIONS.maxX)
     return true;
   else
     return false;
 }
 
 function SetTileToLastTile(lastPathTile, newPathTile) {
-  newPathTile.x = lastPathTile.x;
-  newPathTile.y = lastPathTile.y;
+    newPathTile.x = lastPathTile.x;
+    newPathTile.y = lastPathTile.y;
 }
 
 gameScene.drawMapPath = function () {
@@ -203,7 +206,6 @@ class EnemyWave {
     }
   }
 }
-
 
 //Utilities
 function getRndInteger(min, max) {
