@@ -8,6 +8,7 @@ const TOP_MARGIN = BOX_SIZE * TOP_MARGIN_BOXES;
 let gameScene = new Phaser.Scene('Game');
 gameScene.score = 0;
 gameScene.scoreDisplay = null;
+gameScene.enemyWave = null;
 
 let config = {
   type: Phaser.AUTO,
@@ -29,6 +30,7 @@ gameScene.preload = function () {
   this.load.image('block', 'assets/block.png');
   this.load.image('wall', 'assets/wall.png');
   this.load.image('frog', 'assets/frog.png');
+  this.load.image('tower', 'assets/tower.png');
 }
 
 gameScene.create = function () {
@@ -38,11 +40,15 @@ gameScene.create = function () {
 
 gameScene.update = function () {
   gameScene.scoreDisplay.text = "Score: " + gameScene.score;
+
+  if (gameScene.enemyWave) {
+    gameScene.enemyWave.update();
+  }
 }
 
 //CUSTOM functions
 gameScene.drawImage = function (x, y, name) {
-  return gameScene.add.image(x, y, name).setOrigin(0, 0);
+  return gameScene.add.sprite(x, y, name).setOrigin(0, 0);
 }
 
 gameScene.initPlayerInputs = function () {
@@ -55,7 +61,7 @@ gameScene.initPlayerInputs = function () {
   });
 
   gameScene.input.keyboard.on('keyup_S', function (event) {
-    gameScene.spawnEnemyWave('frog', 100);
+    gameScene.spawnEnemyWave('frog', 10);
   });
 
   gameScene.input.keyboard.on('keyup_D', function (event) {
@@ -66,7 +72,11 @@ gameScene.initPlayerInputs = function () {
 gameScene.drawMap = function () {
 
   for (let i = TOP_MARGIN; i < config.height; i += BOX_SIZE) {
-    this.drawImage(0, i, 'block');
+    let img = this.drawImage(0, i, 'block').setInteractive();
+    img.on('pointerdown', function () {
+      this.destroy();
+      gameScene.drawImage(this.x, this.y, 'tower');
+    });
   }
   for (let i = BOX_SIZE; i < config.width; i += BOX_SIZE) {
     this.drawImage(i, config.height - BOX_SIZE, 'block');
@@ -80,9 +90,46 @@ gameScene.drawMap = function () {
 }
 
 gameScene.spawnEnemyWave = function (enemyName, nbOfEnemies) {
-  new EnemyWave(enemyName, nbOfEnemies).spawn();
+  gameScene.enemyWave = new EnemyWave(enemyName, nbOfEnemies).spawn();
 }
 
+class EnemyWave {
+  constructor(enemyName, nbOfEnemies) {
+    this.enemyName = enemyName;
+    this.nbOfEnemies = nbOfEnemies;
+    this.enemyImages = [];
+  }
+  spawn() {
+    for (let i = 0; i < this.nbOfEnemies; i++) {
+      let randomX = getRndInteger(PLAYGROUND_DIMENSIONS.minBoxX, PLAYGROUND_DIMENSIONS.maxBoxX);
+      let randomY = getRndInteger(PLAYGROUND_DIMENSIONS.minBoxY, PLAYGROUND_DIMENSIONS.maxBoxY);
+      let enemy = gameScene.drawImage(randomX * BOX_SIZE,
+        randomY * BOX_SIZE,
+        this.enemyName).setInteractive();
+      this.enemyImages.push(enemy);
+    }
+    return this;
+  }
+  update() {
+    for (let i = 0; i < this.nbOfEnemies; i++) {
+      let moveDirection = getRndInteger(1, 4);
+      switch (moveDirection) {
+        case DIRECTION.Up:
+          this.enemyImages[i].y--;
+          break;
+        case DIRECTION.Down:
+          this.enemyImages[i].y++;
+          break;
+        case DIRECTION.Left:
+          this.enemyImages[i].x--;
+          break;
+        case DIRECTION.Right:
+          this.enemyImages[i].x++;
+          break;
+      }
+    }
+  }
+}
 
 /*     BOX_SIZE,TOP_MARGIN+BOX_SIZE        PLAY_AREA_SIZE.width-(BOX_SIZE*2),TOP_MARGIN+BOX_SIZE*/
 
@@ -95,9 +142,9 @@ const PLAYGROUND_DIMENSIONS = {
   minBoxY: TOP_MARGIN_BOXES + 1,
   maxBoxY: (PLAY_AREA_SIZE.height / BOX_SIZE) - 2,
   minX: BOX_SIZE,
-  maxX: PLAY_AREA_SIZE.width - (BOX_SIZE * 2),
+  maxX: PLAY_AREA_SIZE.width - BOX_SIZE,
   minY: TOP_MARGIN + BOX_SIZE,
-  maxY: PLAY_AREA_SIZE.height - (BOX_SIZE * 2)
+  maxY: PLAY_AREA_SIZE.height - BOX_SIZE
 }
 
 const DIRECTION = {
@@ -118,10 +165,11 @@ function GeneratePath(pathTile, direction) {
   let moveDirection;
 
   do {
-    moveDirection = getRndInteger(1, 4);
-    /*if (moveDirection == 2 )
-    moveDirection = getRndInteger(1,4);*/
-  } while (direction.lastDirection === moveDirection);
+    if (getRndInteger(1, 3) != 3)
+      moveDirection = getRndInteger(1, 4);
+    else
+      moveDirection = getRndInteger(2, 4); // a revoir...
+  } while (direction.lastDirection == moveDirection);
 
 
   switch (moveDirection) {
@@ -131,7 +179,7 @@ function GeneratePath(pathTile, direction) {
     case DIRECTION.Down:
       pathTile.y += BOX_SIZE;
       break;
-    case DIRECTION.Left + 5:
+    case DIRECTION.Left:
       pathTile.x -= BOX_SIZE;
       break;
     case DIRECTION.Right:
@@ -153,16 +201,18 @@ function OutOfPlayGroundLimits(pathTile) {
     pathTile.y += BOX_SIZE;
 }
 
-function PathIsCompleted(pathTile) {
-  if (pathTile.x === PLAYGROUND_DIMENSIONS.maxX)
+function PathIsCompleted(pathTile) {  
+  if (pathTile.x >= PLAYGROUND_DIMENSIONS.maxX 
+     || pathTile.y >= PLAYGROUND_DIMENSIONS.maxY)
     return true;
   else
     return false;
 }
 
 function SetTileToLastTile(lastPathTile, newPathTile) {
-    newPathTile.x = lastPathTile.x;
-    newPathTile.y = lastPathTile.y;
+  newPathTile.x = lastPathTile.x;
+
+  newPathTile.y = lastPathTile.y;
 }
 
 gameScene.drawMapPath = function () {
@@ -174,7 +224,7 @@ gameScene.drawMapPath = function () {
   let direction = new Direction()
   let pathTiles = [];
   for (let i = 0; i < 250; i++) {
-    pathTiles.push(new PathTile());
+    pathTiles[i] = new PathTile();
   }
   let Tile_x = 0;
   this.drawImage(PLAYGROUND_DIMENSIONS.minX,
@@ -182,29 +232,13 @@ gameScene.drawMapPath = function () {
     'wall');
 
   do {
-    if (Tile_x > 1) {
+    if (Tile_x > 1) {      
       SetTileToLastTile(pathTiles[Tile_x], pathTiles[Tile_x + 1]);
     }
     this.drawImage(pathTiles[Tile_x].x, pathTiles[Tile_x].y, 'wall');
     Tile_x++;
     GeneratePath(pathTiles[Tile_x], direction);
-  } while (!PathIsCompleted(pathTiles));
-}
-
-class EnemyWave {
-  constructor(enemyName, nbOfEnemies) {
-    this.enemyName = enemyName;
-    this.nbOfEnemies = nbOfEnemies;
-  }
-  spawn() {
-    for (let i = 0; i < this.nbOfEnemies; i++) {
-      let randomX = getRndInteger(PLAYGROUND_DIMENSIONS.minBoxX, PLAYGROUND_DIMENSIONS.maxBoxX);
-      let randomY = getRndInteger(PLAYGROUND_DIMENSIONS.minBoxY, PLAYGROUND_DIMENSIONS.maxBoxY);
-      gameScene.drawImage(randomX * BOX_SIZE,
-        randomY * BOX_SIZE,
-        this.enemyName);
-    }
-  }
+  } while (!PathIsCompleted(pathTiles[Tile_x]));
 }
 
 //Utilities
