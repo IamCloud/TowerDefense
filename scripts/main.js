@@ -51,7 +51,7 @@ gameScene.create = function () {
 gameScene.update = function () {
   gameScene.scoreDisplay.text = "Score: " + gameScene.score;
 
-  if (gameScene.enemyWave) {
+  if (gameScene.enemyWave && gameScene.enemyWave.isActive()) {
     gameScene.enemyWave.update();
   }
 }
@@ -72,7 +72,6 @@ gameScene.initPlayerInputs = function () {
 
   gameScene.input.keyboard.on('keyup_S', function (event) {
     gameScene.spawnEnemyWave('frog', 10);
-
   });
 
   gameScene.input.keyboard.on('keyup_D', function (event) {
@@ -120,6 +119,7 @@ gameScene.drawMap = function () {
 gameScene.spawnEnemyWave = function (enemyName, nbOfEnemies) {
   if (gameScene.enemyWave) {
     gameScene.enemyWave.clear();
+    gameScene.enemyWave = null;
   }
   gameScene.enemyWave = new EnemyWave(enemyName, nbOfEnemies);
 }
