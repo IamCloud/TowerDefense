@@ -1,12 +1,4 @@
-const BOX_SIZE = 32;
-const PLAY_AREA_SIZE = {
-  width: BOX_SIZE * 30, //960
-  height: BOX_SIZE * 20 //640
-}
-const TOP_MARGIN_BOXES = 2;
-const RIGHT_MARGIN_BOXES = 10;
-const TOP_MARGIN = BOX_SIZE * TOP_MARGIN_BOXES;
-const RIGHT_MARGIN = BOX_SIZE * RIGHT_MARGIN_BOXES;
+
 let gameScene = new Phaser.Scene('Game');
 gameScene.score = 0;
 gameScene.scoreDisplay = null;
@@ -26,10 +18,13 @@ let game = new Phaser.Game(config);
 
 //USED BY PHASER
 gameScene.preload = function () {
-  this.load.audio('pouf', 'assets/audio/pouf.m4a');
-  this.load.audio('shwing', 'assets/audio/Shwing.m4a');
-  this.load.audio('allmyfriendsaredead', 'assets/audio/AllMyFriendsAreDead.m4a');
+  //Audio
+  this.load.audio('destroy', 'assets/audio/destroy.m4a');
+  this.load.audio('createPath', 'assets/audio/createPath.m4a');
+  this.load.audio('clearwave', 'assets/audio/clearWave.m4a');
   this.load.audio('spawnsound', 'assets/audio/Spawn.m4a');
+
+  //Images
   this.load.image('block', 'assets/block.png');
   this.load.image('path', 'assets/path.png');
   this.load.image('frog', 'assets/frog.png');
@@ -44,12 +39,13 @@ gameScene.init = function () {
 }
 
 gameScene.create = function () {
-  gameScene.poufSound = this.sound.add('pouf');
-  gameScene.shwingSound = this.sound.add('shwing');
-  gameScene.allMyFriendsAreDeadSound = this.sound.add('allmyfriendsaredead');
+  gameScene.destroySound = this.sound.add('destroy');
+  gameScene.createPathSound = this.sound.add('createPath');
+  gameScene.clearWaveSound = this.sound.add('clearwave');
   gameScene.spawnSound = this.sound.add('spawnsound');
   this.drawMap();
   this.initPlayerInputs();
+  gameScene.drawMapPath();
 }
 
 gameScene.update = function () {
@@ -75,21 +71,20 @@ gameScene.initPlayerInputs = function () {
   });
 
   gameScene.input.keyboard.on('keyup_S', function (event) {
-    gameScene.spawnSound.play();
     gameScene.spawnEnemyWave('frog', 10);
-    
+
   });
 
   gameScene.input.keyboard.on('keyup_D', function (event) {
-    gameScene.shwingSound.play();
+    gameScene.createPathSound.play();
     gameScene.drawMapPath();
-    
+
   });
 
   gameScene.input.keyboard.on('keyup_C', function (event) {
-    gameScene.allMyFriendsAreDeadSound.play();
+    gameScene.clearWaveSound.play();
     gameScene.enemyWave.clear();
-    
+
   });
 }
 
@@ -126,78 +121,15 @@ gameScene.spawnEnemyWave = function (enemyName, nbOfEnemies) {
   if (gameScene.enemyWave) {
     gameScene.enemyWave.clear();
   }
-  gameScene.enemyWave = new EnemyWave(enemyName, nbOfEnemies).spawn();
+  gameScene.enemyWave = new EnemyWave(enemyName, nbOfEnemies);
 }
 
-class EnemyWave {
-  constructor(enemyName, nbOfEnemies) {
-    this.enemyName = enemyName;
-    this.nbOfEnemies = nbOfEnemies;
-    this.enemyImages = [];
-  }
-  spawn() {
-    for (let i = 0; i < this.nbOfEnemies; i++) {
-      let randomX = getRndInteger(PLAYGROUND_DIMENSIONS.minBoxX, PLAYGROUND_DIMENSIONS.maxBoxX);
-      let randomY = getRndInteger(PLAYGROUND_DIMENSIONS.minBoxY, PLAYGROUND_DIMENSIONS.maxBoxY);
-      let enemy = gameScene.drawImage(randomX * BOX_SIZE,
-        randomY * BOX_SIZE,
-        this.enemyName).setInteractive();
-      enemy.on('pointerdown', function () {
-        this.destroy();
-        gameScene.poufSound.play();
-      });
-      this.enemyImages.push(enemy);
-    }
-    return this;
-  }
-  update() {
-    for (let i = 0; i < this.enemyImages.length; i++) {
-      let moveDirection = getRndInteger(1, 4);
-      switch (moveDirection) {
-        case DIRECTION.Up:
-          this.enemyImages[i].y--;
-          break;
-        case DIRECTION.Down:
-          this.enemyImages[i].y++;
-          break;
-        case DIRECTION.Left:
-          this.enemyImages[i].x--;
-          break;
-        case DIRECTION.Right:
-          this.enemyImages[i].x++;
-          break;
-      }
-    }
-  }
-  clear() {
-    for (let i = 0; i < this.enemyImages.length; i++) {
-      this.enemyImages[i].destroy();
-    }
-  }
-}
 
 /*     BOX_SIZE,TOP_MARGIN+BOX_SIZE        PLAY_AREA_SIZE.width-(BOX_SIZE*2),TOP_MARGIN+BOX_SIZE*/
 
 
 /*     BOX_SIZE,PLAY_AREA_SIZE.height-(BOX_SIZE*2)     PLAY_AREA_SIZE.width-(BOX_SIZE*2),PLAY_AREA_SIZE.height(BOX_SIZE*2)*/
 
-const PLAYGROUND_DIMENSIONS = {
-  minBoxX: 1,
-  maxBoxX: (PLAY_AREA_SIZE.width / BOX_SIZE) - RIGHT_MARGIN_BOXES - 2,
-  minBoxY: TOP_MARGIN_BOXES + 1,
-  maxBoxY: (PLAY_AREA_SIZE.height / BOX_SIZE) - 2,
-  minX: BOX_SIZE,
-  maxX: PLAY_AREA_SIZE.width - RIGHT_MARGIN,
-  minY: TOP_MARGIN + BOX_SIZE,
-  maxY: PLAY_AREA_SIZE.height - BOX_SIZE
-}
-
-const DIRECTION = {
-  Up: 1,
-  Down: 2,
-  Left: 3,
-  Right: 4
-}
 
 class PathTile {
   constructor() {
@@ -224,7 +156,7 @@ function GeneratePath(pathTile, direction) {
     case DIRECTION.Down:
       pathTile.y += BOX_SIZE;
       break;
-    case DIRECTION.Left+4:
+    case DIRECTION.Left + 4:
       pathTile.x -= BOX_SIZE;
       break;
     case DIRECTION.Right:
@@ -267,23 +199,22 @@ gameScene.drawMapPath = function () {
     }
   }
   let direction = new Direction()
-  let pathTiles = [];
-  for (let i = 0; i < 250; i++) {
-    pathTiles[i] = new PathTile();
-  }
+  gameScene.pathTiles = [];
+  gameScene.pathTiles.push(new PathTile());
   let Tile_x = 0;
   this.drawImage(PLAYGROUND_DIMENSIONS.minX,
     PLAYGROUND_DIMENSIONS.minY,
     'path');
 
   do {
+    gameScene.pathTiles.push(new PathTile());
     if (Tile_x > 1) {
-      SetTileToLastTile(pathTiles[Tile_x], pathTiles[Tile_x + 1]);
+      SetTileToLastTile(gameScene.pathTiles[Tile_x], gameScene.pathTiles[Tile_x + 1]);
     }
-    this.drawImage(pathTiles[Tile_x].x, pathTiles[Tile_x].y, 'path');
+    this.drawImage(gameScene.pathTiles[Tile_x].x, gameScene.pathTiles[Tile_x].y, 'path');
     Tile_x++;
-    GeneratePath(pathTiles[Tile_x], direction);
-  } while (!PathIsCompleted(pathTiles[Tile_x]));
+    GeneratePath(gameScene.pathTiles[Tile_x], direction);
+  } while (!PathIsCompleted(gameScene.pathTiles[Tile_x]));
 }
 
 
