@@ -1,7 +1,6 @@
-
 let gameScene = new Phaser.Scene('Game');
-gameScene.score = 0;
-gameScene.scoreDisplay = null;
+gameScene.lives = 10;
+gameScene.livesDisplay = null;
 gameScene.enemyWave = null;
 
 let config = {
@@ -32,10 +31,10 @@ gameScene.preload = function () {
 }
 
 gameScene.init = function () {
-  gameScene.scoreDisplay = this.add.text(0, 0, 'Score: ' + gameScene.score, { fontSize: '32px', color: "white" });
-  this.add.text(200, 0, 'S: Spawn wave', { fontSize: '12px', color: "white" });
+  gameScene.livesDisplay = this.add.text(0, 0, 'Lives: ' + gameScene.lives, { fontSize: '32px', color: "white" });
+  this.add.text(250, 0, 'S: Spawn wave', { fontSize: '12px', color: "white" });
   this.add.text(400, 0, 'D: Generate path', { fontSize: '12px', color: "white" });
-  this.add.text(600, 0, 'C: Clear ennemies', { fontSize: '12px', color: "white" });
+  this.add.text(550, 0, 'C: Clear ennemies', { fontSize: '12px', color: "white" });
 }
 
 gameScene.create = function () {
@@ -49,7 +48,7 @@ gameScene.create = function () {
 }
 
 gameScene.update = function () {
-  gameScene.scoreDisplay.text = "Score: " + gameScene.score;
+  gameScene.livesDisplay.text = "Lives: " + gameScene.lives;
 
   if (gameScene.enemyWave && gameScene.enemyWave.isActive()) {
     gameScene.enemyWave.update();
@@ -57,17 +56,21 @@ gameScene.update = function () {
 }
 
 //CUSTOM functions
+gameScene.gameOver = function() {
+  this.add.text(PLAYGROUND_DIMENSIONS.maxX/2, PLAYGROUND_DIMENSIONS.maxY/2, 'Game over', { fontSize: '64px', color: "red" }).setOrigin(0.5);
+}
+
 gameScene.drawImage = function (x, y, name) {
   return gameScene.add.sprite(x, y, name).setOrigin(0, 0);
 }
 
 gameScene.initPlayerInputs = function () {
   gameScene.input.keyboard.on('keyup_SPACE', function (event) {
-    gameScene.score++;
+    gameScene.lives++;
   });
 
   gameScene.input.keyboard.on('keyup_BACKSPACE', function (event) {
-    gameScene.score--;
+    gameScene.lives--;
   });
 
   gameScene.input.keyboard.on('keyup_S', function (event) {

@@ -59,8 +59,11 @@ class Enemy {
     }
     enemySafe() {
         gameScene.destroySound.play();
-        gameScene.score--;
+        gameScene.lives--;
         this.destroy();
+        if (gameScene.lives <= 0) {
+            gameScene.gameOver();
+        }
     }
     destroy() {        
         this.img.destroy();
